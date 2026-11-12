@@ -1,0 +1,419 @@
+:root {
+  --font-display: 'Outfit', sans-serif;
+  --font-jp: 'M PLUS Rounded 1c', sans-serif;
+  --accent-work: #f6ad55;
+  --accent-break: #68d391;
+  --accent-done: #63b3ed;
+  --text-main: #fffdf9;
+  --glass-bg: rgba(18, 16, 24, 0.58);
+  --glass-border: rgba(255, 248, 235, 0.22);
+  --bar-height: 28px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: #121018;
+  font-family: var(--font-jp);
+  color: var(--text-main);
+  user-select: none;
+}
+
+.app-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* =========================================
+   背景画像（lofi_2.png）＆雰囲気アニメーション
+========================================= */
+.bg-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  transform: scale(1.02);
+  transition: filter 1.8s ease, transform 12s ease-in-out;
+}
+
+/* 作業中はわずかに呼吸するような微細なズーム感 */
+.app-container.is-running .bg-image {
+  animation: slowBreathe 24s ease-in-out infinite alternate;
+}
+
+/* 休憩中は少し落ち着いたブルーナイト調に変化 */
+.app-container.is-break .bg-image {
+  filter: brightness(0.86) saturate(1.12) hue-rotate(-8deg);
+}
+
+@keyframes slowBreathe {
+  0% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* UIの視認性を高めるグラデーションオーバーレイ */
+.vignette-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(10, 9, 16, 0.82) 0%,
+    rgba(10, 9, 16, 0.22) 36%,
+    rgba(10, 9, 16, 0.05) 72%,
+    rgba(10, 9, 16, 0.35) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* =========================================
+   上部コントロールバー（BGM動画録画・再生用）
+========================================= */
+.top-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 12px
+    max(20px, env(safe-area-inset-left));
+}
+
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text-main);
+  font-family: var(--font-jp);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(36, 32, 48, 0.78);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+.icon-btn.primary {
+  background: rgba(246, 173, 85, 0.94);
+  color: #1a1410;
+  border-color: rgba(255, 235, 200, 0.55);
+}
+
+.icon-btn.primary:hover {
+  background: rgba(246, 173, 85, 1);
+}
+
+/* =========================================
+   左下タイムカウント表示
+========================================= */
+.bottom-hud {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 max(20px, env(safe-area-inset-right))
+    calc(var(--bar-height) + 16px + env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.timer-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 18px 14px;
+  border-radius: 18px;
+  background: rgba(16, 14, 22, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 248, 235, 0.2);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.42);
+}
+
+.phase-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--accent-work);
+  box-shadow: 0 0 10px var(--accent-work);
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.app-container.is-break .status-dot {
+  background-color: var(--accent-break);
+  box-shadow: 0 0 10px var(--accent-break);
+}
+
+.app-container.is-done .status-dot {
+  background-color: var(--accent-done);
+  box-shadow: 0 0 10px var(--accent-done);
+}
+
+.phase-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fde68a;
+}
+
+.app-container.is-break .phase-label {
+  color: #a7f3d0;
+}
+
+.app-container.is-done .phase-label {
+  color: #bae6fd;
+}
+
+.set-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+}
+
+.set-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  transition: all 0.3s ease;
+}
+
+.set-dot.active {
+  background: var(--accent-work);
+  transform: scale(1.25);
+}
+
+.app-container.is-break .set-dot.active {
+  background: var(--accent-break);
+}
+
+.set-dot.completed {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.countdown-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.countdown-time {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 7vw, 4.1rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+.total-elapsed {
+  font-family: var(--font-display);
+  font-size: clamp(0.84rem, 2.2vw, 1rem);
+  font-weight: 600;
+  color: rgba(255, 253, 249, 0.8);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================
+   画面最下部 18分経過タイムラインバー
+========================================= */
+.progress-bar-wrapper {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--bar-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(12, 10, 18, 0.88);
+  border-top: 1px solid rgba(255, 248, 235, 0.25);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--bar-height);
+  width: 0%;
+  background: linear-gradient(90deg, #dd6b20 0%, #f6ad55 60%, #fbd38d 100%);
+  box-shadow: 0 0 16px rgba(246, 173, 85, 0.85);
+  transition: width 0.3s linear, background 0.6s ease;
+}
+
+.app-container.is-break .progress-bar-fill {
+  background: linear-gradient(90deg, #2f855a 0%, #48bb78 60%, #9ae6b4 100%);
+  box-shadow: 0 0 16px rgba(104, 211, 145, 0.85);
+}
+
+.app-container.is-done .progress-bar-fill {
+  background: linear-gradient(90deg, #3182ce 0%, #63b3ed 60%, #bee3f8 100%);
+  box-shadow: 0 0 16px rgba(99, 179, 237, 0.85);
+}
+
+.progress-head-glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff, 0 0 14px #fde68a;
+}
+
+.progress-segments {
+  position: relative;
+  width: 100%;
+  height: var(--bar-height);
+  display: flex;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.segment-slot {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.35);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 253, 249, 0.94);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.segment-slot:last-child {
+  border-right: none;
+}
+
+.segment-slot.is-break-slot {
+  background: rgba(104, 211, 145, 0.16);
+  font-size: 0.65rem;
+}
+
+/* =========================================
+   iPhone / Android スマホ縦画面向け微調整
+========================================= */
+@media (max-width: 600px) {
+  :root {
+    --bar-height: 24px;
+  }
+
+  /* スマホ縦画面では中央のキャラクターと机の猫がバランスよく収まるよう調整 */
+  .bg-image {
+    object-position: 44% center;
+  }
+
+  .top-bar {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .session-pill {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
+
+  .icon-btn {
+    height: 34px;
+    padding: 0 11px;
+    font-size: 0.76rem;
+  }
+
+  .bottom-hud {
+    padding-left: 14px;
+    padding-bottom: calc(var(--bar-height) + 12px + env(safe-area-inset-bottom));
+  }
+
+  .timer-card {
+    padding: 10px 14px 11px;
+    border-radius: 14px;
+  }
+
+  .segment-slot {
+    font-size: 0.64rem;
+  }
+  .segment-slot.is-break-slot {
+    font-size: 0.58rem;
+  }
+}
